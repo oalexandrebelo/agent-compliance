@@ -6,9 +6,9 @@ import { successResponse, errorResponse } from '@/lib/api';
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const agentId = params.id;
+        const { id: agentId } = await params;
 
         // 1. Fetch Agent & Recent History
         const agent = await prisma.agent.findUnique({

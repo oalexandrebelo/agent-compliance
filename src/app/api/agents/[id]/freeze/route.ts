@@ -16,7 +16,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         if (!reason) return errorResponse('Audit reason is required', 400);
 
         // 1. Freeze Wallet via Circle API
-        await circleClient.createAgentWallet(agentId); // Re-using for demo connectivity
+        await circleClient.createAgentWallet(); // Re-using for demo connectivity
 
 
 
