@@ -1,3 +1,5 @@
+"use client";
+
 import useSWR from 'swr';
 import { fetcher } from '@/hooks/use-dashboard-data';
 import { AuditLog } from '@prisma/client';
