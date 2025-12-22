@@ -5,10 +5,10 @@ import { circleClient } from '@/lib/circle/client';
 import { successResponse, errorResponse } from '@/lib/api';
 import { TransactionStatus } from '@prisma/client'; // Import Enum
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { reason, walletId } = await req.json();
-        const agentId = params.id;
+        const { id: agentId } = await params;
 
         if (!reason) return errorResponse('Audit reason is required', 400);
 
