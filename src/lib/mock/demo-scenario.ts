@@ -1,4 +1,7 @@
-// Demo Scenario: "The Rogue Agent"
+// 🎬 HACKATHON DEMO ARTIFACT
+// This file orchestrates the "Live Simulation" for the judges.
+// In a real deployment, these events would trigger from on-chain listeners.
+
 
 export type SimulationStep = {
     id: number;

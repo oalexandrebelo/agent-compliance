@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Simple event emitter pattern for SSE
-// In production, use Redis Pub/Sub for scalability across instances
+// Server-Sent Events (SSE) Stream
+// Architecture Decision: Using direct SSE for low-latency feedback during presentation.
+// Scalability Note: Production would upgrade this to Redis Pub/Sub.
 let clients: ReadableStreamDefaultController[] = [];
 
 export async function GET(req: NextRequest) {
