@@ -1,6 +1,9 @@
 import { prisma } from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
         // Parallelize queries for performance
