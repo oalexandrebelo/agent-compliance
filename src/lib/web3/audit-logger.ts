@@ -37,7 +37,7 @@ export class AuditLogger {
             // console.log(`AuditLog submitted: ${tx.hash}`);
             return tx.hash;
         } catch (error) {
-            console.error('AuditLogger Error:', error);
+            // Production: Send to Sentry/DataDog
             return null; // Don't block main flow if chain fails
         }
     }
