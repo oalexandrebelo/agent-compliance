@@ -46,7 +46,7 @@ export async function GET() {
             riskTrend
         });
     } catch (error) {
-        console.error('Failed to fetch stats:', error);
+        // Log to observability service (e.g., Datadog) in production
         return errorResponse('Internal Server Error', 500);
     }
 }
