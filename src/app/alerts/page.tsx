@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2, XCircle, Search, Filter } from 'lucide-react';
 import { InterventionModal } from '@/components/compliance/InterventionModal';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 const mockAlerts = [
     { id: '1', title: 'Structuring / Layering Attempt', severity: 'CRITICAL', agent: 'Agent_007', time: '10 mins ago', status: 'PENDING' },
@@ -16,6 +18,27 @@ const mockAlerts = [
 ];
 
 export default function AlertsPage() {
+    const { toast } = useToast();
+    const [alerts, setAlerts] = useState(mockAlerts);
+
+    const handleApprove = (alertId: string) => {
+        setAlerts(alerts.filter(a => a.id !== alertId));
+        toast({
+            title: "Alert Approved",
+            description: "Transaction has been approved and executed.",
+            variant: "default",
+        });
+    };
+
+    const handleBlock = (alertId: string) => {
+        setAlerts(alerts.filter(a => a.id !== alertId));
+        toast({
+            title: "Transaction Blocked",
+            description: "Agent wallet has been quarantined for review.",
+            variant: "destructive",
+        });
+    };
+
     return (
         <AgentCommandShell>
             <div className="flex flex-col gap-6">
@@ -45,7 +68,7 @@ export default function AlertsPage() {
 
                 {/* Alerts List */}
                 <div className="space-y-4">
-                    {mockAlerts.map((alert) => (
+                    {alerts.map((alert) => (
                         <Card key={alert.id} className="border-l-4 border-l-red-500">
                             <CardContent className="flex items-center justify-between p-6">
                                 <div className="space-y-1">
@@ -67,10 +90,18 @@ export default function AlertsPage() {
                                         </Button>
                                     } />
 
-                                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+                                    <Button
+                                        size="sm"
+                                        className="bg-emerald-600 hover:bg-emerald-700"
+                                        onClick={() => handleApprove(alert.id)}
+                                    >
                                         <CheckCircle2 className="mr-2 h-4 w-4" /> Approve
                                     </Button>
-                                    <Button size="sm" variant="destructive">
+                                    <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => handleBlock(alert.id)}
+                                    >
                                         <XCircle className="mr-2 h-4 w-4" /> Block
                                     </Button>
                                 </div>

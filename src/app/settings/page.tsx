@@ -8,8 +8,19 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Bell, Shield, Wallet } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
+    const { toast } = useToast();
+
+    const handleSaveSettings = () => {
+        toast({
+            title: "Settings Updated",
+            description: "Your compliance settings have been saved successfully.",
+            variant: "default",
+        });
+    };
+
     return (
         <AgentCommandShell>
             <div className="max-w-4xl space-y-8">
