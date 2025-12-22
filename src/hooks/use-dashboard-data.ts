@@ -5,7 +5,7 @@ import { Agent, Transaction, Alert } from '@prisma/client';
 // Fetcher adapter for SWR to use our class-based client
 // We cast to any here to satisfy SWR's strictly typed generic overloads.
 // The app safety comes from useSWR<T> generics.
-const fetcher = <T>(url: string) => apiClient.get<T>(url);
+export const fetcher = <T>(url: string) => apiClient.get<T>(url);
 
 export function useAgents() {
     const { data, error, isLoading, mutate } = useSWR<Agent[]>('/api/agents', fetcher, {

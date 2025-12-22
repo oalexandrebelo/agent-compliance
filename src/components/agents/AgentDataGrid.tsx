@@ -14,10 +14,14 @@ import {
 interface Agent {
     id: string;
     name: string;
-    model: string; // e.g., GPT-4o
-    purpose: string;
-    status: 'ACTIVE' | 'PAUSED' | 'SUSPENDED';
-    complianceScore: number; // 0-100
+    model?: string; // Optional or mapped
+    description: string | null; // was purpose
+    status: 'ACTIVE' | 'PAUSED' | 'SUSPENDED' | 'QUARANTINE' | 'ARCHIVED'; // Match enum
+    riskScore?: number; // was complianceScore (mapped from trustScore?) 
+    // Actually schema has trustScore (0.5). High trust = low risk? 
+    // Or riskScore? Schema has riskScores relation but Agent has trustScore.
+    // Let's use trustScore.
+    trustScore: number;
     walletAddress: string;
 }
 
@@ -28,8 +32,8 @@ export function AgentDataGrid({ agents, onDeepScan }: { agents: Agent[], onDeepS
                 <TableRow>
                     <TableHead>Identity</TableHead>
                     <TableHead>Brain Model</TableHead>
-                    <TableHead>Purpose</TableHead>
-                    <TableHead>Compliance Status</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Trust Score</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
@@ -49,9 +53,9 @@ export function AgentDataGrid({ agents, onDeepScan }: { agents: Agent[], onDeepS
                             </div>
                         </TableCell>
                         <TableCell>
-                            <Badge variant="outline" className="font-mono text-xs">{agent.model}</Badge>
+                            <Badge variant="outline" className="font-mono text-xs">{agent.model || 'Gemini Pro'}</Badge>
                         </TableCell>
-                        <TableCell className="text-muted-foreground">{agent.purpose}</TableCell>
+                        <TableCell className="text-muted-foreground">{agent.description || 'No description'}</TableCell>
                         <TableCell>
                             <div className="flex items-center gap-2">
                                 {agent.status === 'ACTIVE' ? (
@@ -60,7 +64,7 @@ export function AgentDataGrid({ agents, onDeepScan }: { agents: Agent[], onDeepS
                                     <ShieldAlert className="h-4 w-4 text-amber-500" />
                                 )}
                                 <span className={agent.status === 'ACTIVE' ? "text-emerald-500" : "text-amber-500"}>
-                                    {agent.status} ({agent.complianceScore}%)
+                                    {agent.status} ({Math.round(agent.trustScore * 100)}%)
                                 </span>
                             </div>
                         </TableCell>

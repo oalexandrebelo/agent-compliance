@@ -61,7 +61,7 @@ export default function AlertsPage() {
                                 </div>
 
                                 <div className="flex items-center gap-3">
-                                    <InterventionModal agentId={alert.agent} trigger={
+                                    <InterventionModal trigger={
                                         <Button variant="outline" className="text-amber-500 border-amber-500/20 hover:bg-amber-500/10">
                                             Freeze Wallet
                                         </Button>

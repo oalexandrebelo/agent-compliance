@@ -6,7 +6,7 @@ export type RiskAnalysisResult = {
     reasons: string[];
 };
 
-export async function calculateRiskScore(transactionData: any): Promise<RiskAnalysisResult> {
+export async function calculateRiskScore(transactionData: unknown): Promise<RiskAnalysisResult> {
     const prompt = `
     You are an AI Compliance Officer for a crypto platform. 
     Analyze the following transaction for AML/KYC risks.

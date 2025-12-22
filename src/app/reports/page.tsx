@@ -12,11 +12,11 @@ import { useState } from 'react';
 
 export default function ReportsPage() {
     const { stats, isLoading } = useStats();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [selectedReport, setSelectedReport] = useState<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [selectedReport, setSelectedReport] = useState<unknown>(null);
 
     // Derived metrics for display
-    const openSars = stats?.riskTrend?.filter((r: any) => r.risk > 0.8).length || 0;
+    const openSars = stats?.riskTrend?.filter((r: { risk: number }) => r.risk > 0.8).length || 0;
     const complianceScore = stats?.avgRiskScore ? Math.round(100 - (stats.avgRiskScore * 10)) : 98;
     const reportsCount = stats?.blockedCount || 14;
 

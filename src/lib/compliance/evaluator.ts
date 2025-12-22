@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { calculateRiskScore } from '@/lib/gemini/risk-engine';
+import { ComplianceDecision, TransactionStatus } from '@prisma/client';
 
 export async function evaluateTransaction(transactionId: string) {
     // 1. Fetch Transaction
@@ -39,8 +40,8 @@ export async function evaluateTransaction(transactionId: string) {
         where: { id: transactionId },
         data: {
             riskScore: riskAnalysis.score,
-            decision: decision as any,
-            status: status as any,
+            decision: decision as ComplianceDecision,
+            status: status as TransactionStatus,
             riskAnalysis: {
                 create: {
                     overallScore: riskAnalysis.score,

@@ -38,6 +38,19 @@ class CircleWalletClient {
         // Mock signature for demo purposes until full challenge flow is implemented
         return `0x${Buffer.from(`signed:${message}`).toString('hex')}`;
     }
+
+    public async get<T>(url: string): Promise<{ data: { data: T } }> {
+        // Mock implementation or real axios call
+        // For demo, we return mock data if not implemented
+        console.log(`Mock GET: ${url}`);
+        return { data: { data: {} as T } };
+    }
+
+    public async post<T>(url: string, data: unknown): Promise<{ data: { data: T } }> {
+        // Mock implementation
+        console.log(`Mock POST: ${url}`, data);
+        return { data: { data: {} as T } };
+    }
 }
 
 export const circleClient = new CircleWalletClient();

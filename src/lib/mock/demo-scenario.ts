@@ -4,7 +4,7 @@ export type SimulationStep = {
     id: number;
     delay: number; // ms delay before this event happens
     type: 'TRANSACTION' | 'ALERT' | 'STATUS_CHANGE';
-    data: any;
+    data: unknown;
 };
 
 export const demoScenario: SimulationStep[] = [

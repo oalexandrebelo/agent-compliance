@@ -15,16 +15,16 @@ import { ArrowRight, Box } from "lucide-react";
 
 interface Transaction {
     id: string;
-    agent: {
+    agent?: {
         name: string;
         walletId: string;
     };
-    amount: string;
+    amount: string | number | { toString: () => string };
     currency: string;
     toAddress: string;
     riskScore: number | null;
     status: string;
-    createdAt: string;
+    createdAt: string | Date;
 }
 
 export function TransactionTable({ transactions }: { transactions: Transaction[] }) {
@@ -48,7 +48,7 @@ export function TransactionTable({ transactions }: { transactions: Transaction[]
                                 <div className="h-6 w-6 rounded bg-primary/10 flex items-center justify-center">
                                     <Box className="h-3 w-3 text-primary" />
                                 </div>
-                                {tx.agent.name}
+                                {tx.agent?.name || 'Unknown Agent'}
                             </div>
                         </TableCell>
                         <TableCell className="font-mono text-xs text-muted-foreground">
@@ -58,7 +58,7 @@ export function TransactionTable({ transactions }: { transactions: Transaction[]
                             </div>
                         </TableCell>
                         <TableCell>
-                            {parseFloat(tx.amount).toLocaleString()} <span className="text-xs text-muted-foreground">{tx.currency}</span>
+                            {parseFloat(tx.amount.toString()).toLocaleString()} <span className="text-xs text-muted-foreground">{tx.currency}</span>
                         </TableCell>
                         <TableCell>
                             <RiskBadge score={tx.riskScore || 0} />

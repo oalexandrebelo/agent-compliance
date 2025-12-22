@@ -19,7 +19,7 @@ export class AuditLogger {
         }
     }
 
-    async logAction(entityId: string, actionType: string, dataPayload: any) {
+    async logAction(entityId: string, actionType: string, dataPayload: unknown) {
         if (!this.contract || !this.wallet) {
             console.warn('AuditLogger: No wallet/contract configured. Skipping blockchain log.');
             return null;
