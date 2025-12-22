@@ -5,6 +5,9 @@ import { circleClient } from '@/lib/circle/client';
 import { successResponse, errorResponse } from '@/lib/api';
 import { TransactionStatus } from '@prisma/client'; // Import Enum
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { reason, walletId } = await req.json();
