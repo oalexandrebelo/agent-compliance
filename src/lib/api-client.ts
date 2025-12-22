@@ -12,7 +12,7 @@ class ApiClient {
 
     constructor() {
         this.client = axios.create({
-            baseURL: '/api',
+            // baseURL: '/api', // Removed to avoid double prefixing (hooks already include /api)
             timeout: 10000,
             headers: {
                 'Content-Type': 'application/json',
