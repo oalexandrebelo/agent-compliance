@@ -1,0 +1,617 @@
+// AgentCompliance - Database Schema
+// Database: SQLite (Recommended for development)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ============================================
+// CORE ENTITIES
+// ============================================
+
+/// Organizações/Empresas que usam o sistema
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique // ex: "hedge-fund-alpha"
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Configurações de compliance
+  complianceSettings ComplianceSettings?
+
+  // Relacionamentos
+  users             User[]
+  agents            Agent[]
+  transactions      Transaction[]
+  alerts            Alert[]
+  reports           ComplianceReport[]
+  auditLogs         AuditLog[]
+  notifications     Notification[]
+  apiKeys           ApiKey[]
+
+  @@map("organizations")
+}
+
+/// Usuários (CFOs, Compliance Officers, Developers)
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String
+  passwordHash   String
+  role           UserRole  @default(VIEWER)
+  organizationId String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  lastLoginAt    DateTime?
+
+  // Preferências
+  notificationPreferences Json? // { email: true, push: false, slack: true }
+  timezone                String @default("UTC")
+
+  // Relacionamentos
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  alertReviews AlertReview[]
+  auditLogs    AuditLog[]
+  apiKeys      ApiKey[]
+
+  @@index([organizationId])
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN          // Pode tudo
+  COMPLIANCE     // Pode revisar alertas e gerar relatórios
+  DEVELOPER      // Pode gerenciar agentes e ver logs
+  VIEWER         // Só visualiza dashboard
+}
+
+/// Agentes de IA que são monitorados
+model Agent {
+  id             String      @id @default(cuid())
+  name           String // ex: "TradingBot_5"
+  description    String?
+  status         AgentStatus @default(ACTIVE)
+  organizationId String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Circle Programmable Wallet
+  walletAddress String  @unique // 0xABC...123
+  walletId      String  @unique // Circle wallet ID
+  chainId       Int     @default(1) // 1 = Ethereum, 42161 = Arbitrum, etc.
+
+  // Trust & Risk Metrics
+  trustScore       Float   @default(0.5) // 0.0 a 1.0
+  totalSpent       Decimal @default(0)
+  transactionCount Int     @default(0)
+  alertCount       Int     @default(0)
+  blockedCount     Int     @default(0)
+
+  // Limites configuráveis
+  dailyLimit      Decimal? // null = sem limite
+  transactionLimit Decimal?
+
+  // Behavioral Profile (JSON para flexibilidade)
+  behavioralProfile Json? // { avgAmount: 150, peakHours: [9,10,14], commonVendors: [...] }
+
+  // Relacionamentos
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  alerts       Alert[]
+  riskScores   RiskScore[]
+
+  @@index([organizationId])
+  @@index([walletAddress])
+  @@index([status])
+  @@map("agents")
+}
+
+enum AgentStatus {
+  ACTIVE      // Operando normalmente
+  PAUSED      // Temporariamente desativado
+  SUSPENDED   // Suspenso por compliance
+  QUARANTINE  // Em quarentena (não pode fazer transações)
+  ARCHIVED    // Desativado permanentemente
+}
+
+// ============================================
+// TRANSACTIONS & MONITORING
+// ============================================
+
+/// Transações feitas pelos agentes
+model Transaction {
+  id             String            @id @default(cuid())
+  agentId        String
+  organizationId String
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  // Dados da transação
+  fromAddress   String
+  toAddress     String
+  amount        Decimal
+  currency      String            @default("USDC")
+  chainId       Int               @default(1)
+  txHash        String?           @unique // Hash da transação on-chain (quando executada)
+  
+  // Status & Decisão
+  status        TransactionStatus @default(PENDING)
+  decision      ComplianceDecision @default(PENDING)
+  riskScore     Float?            // 0.0 (seguro) a 1.0 (perigoso)
+  
+  // Metadados
+  metadata      Json? // { vendor: "api.coinbase.com", purpose: "data_purchase", ip: "192.168.1.1" }
+  
+  // Circle & Arc Data
+  circleTransactionId String? @unique
+  gasUsed             Decimal?
+  gasPriceGwei        Decimal?
+
+  // Timestamps importantes
+  submittedAt  DateTime?
+  evaluatedAt  DateTime? // Quando o compliance avaliou
+  executedAt   DateTime? // Quando foi executada on-chain
+  blockedAt    DateTime?
+
+  // Relacionamentos
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent        Agent        @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  riskAnalysis RiskScore?
+  alert        Alert?
+  screeningResult ScreeningResult?
+
+  @@index([agentId])
+  @@index([organizationId])
+  @@index([status])
+  @@index([decision])
+  @@index([createdAt])
+  @@index([toAddress])
+  @@map("transactions")
+}
+
+enum TransactionStatus {
+  PENDING     // Aguardando avaliação
+  EVALUATING  // Sendo analisado pelo AI
+  APPROVED    // Aprovado, pode executar
+  EXECUTING   // Sendo executada on-chain
+  COMPLETED   // Finalizada com sucesso
+  QUARANTINE  // Em quarentena (aguardando revisão humana)
+  BLOCKED     // Bloqueada permanentemente
+  FAILED      // Falhou na execução
+}
+
+enum ComplianceDecision {
+  PENDING      // Aguardando decisão
+  AUTO_APPROVE // Aprovado automaticamente
+  AUTO_BLOCK   // Bloqueado automaticamente
+  MANUAL_APPROVE // Aprovado por humano
+  MANUAL_DENY  // Negado por humano
+}
+
+/// Risk Scores calculados pelo Gemini AI
+model RiskScore {
+  id            String   @id @default(cuid())
+  transactionId String   @unique
+  agentId       String
+  createdAt     DateTime @default(now())
+
+  // Score final
+  overallScore Float // 0.0 a 1.0
+  confidence   Float // 0.0 a 1.0 (quão confiante o modelo está)
+
+  // Subscores (componentes do risco)
+  velocityScore    Float? // Velocidade de transações
+  amountScore      Float? // Valor anômalo
+  geographyScore   Float? // Localização suspeita
+  behaviorScore    Float? // Comportamento fora do padrão
+  reputationScore  Float? // Reputação do destinatário
+
+  // Explicações geradas pelo Gemini
+  aiExplanation String? // Texto em linguagem natural (removed @db.Text for SQLite compatibility)
+  reasons       Json? // [ "unusual_hour", "new_wallet", "high_amount" ]
+
+  // Dados usados na análise
+  features Json? // { avgLast7Days: 150, currentAmount: 2000, hourOfDay: 3, ... }
+
+  // Relacionamentos
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  agent       Agent       @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([overallScore])
+  @@map("risk_scores")
+}
+
+/// Resultados do Circle Transaction Screening
+model ScreeningResult {
+  id            String   @id @default(cuid())
+  transactionId String   @unique
+  createdAt     DateTime @default(now())
+
+  // Resultado do screening
+  isPassed      Boolean // true = limpo, false = flagged
+  riskLevel     ScreeningRiskLevel
+  
+  // Listas em que o endereço aparece
+  isOnOFAC      Boolean @default(false) // OFAC Sanctions List
+  isOnEU        Boolean @default(false) // EU Sanctions List
+  isOnPEP       Boolean @default(false) // Politically Exposed Persons
+  isOnBlacklist Boolean @default(false) // Blacklist customizada
+
+  // Detalhes
+  details       Json? // Informações adicionais do Circle
+  circleRequestId String? // ID do request no Circle
+
+  // Relacionamentos
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([isPassed])
+  @@index([riskLevel])
+  @@map("screening_results")
+}
+
+enum ScreeningRiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ============================================
+// ALERTS & REVIEWS
+// ============================================
+
+/// Alertas gerados para transações suspeitas
+model Alert {
+  id             String      @id @default(cuid())
+  transactionId  String      @unique
+  agentId        String
+  organizationId String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Classificação do alerta
+  severity       AlertSeverity // LOW, MEDIUM, HIGH, CRITICAL
+  status         AlertStatus   @default(PENDING)
+  
+  // Razões do alerta
+  reasons        Json // [ "unusual_hour", "new_wallet", "high_amount" ]
+  aiExplanation  String // Explicação em linguagem natural (removed @db.Text)
+
+  // SLA tracking
+  mustReviewBy   DateTime? // Deadline para revisão (ex: 24h para HIGH)
+  reviewedAt     DateTime?
+  resolvedAt     DateTime?
+
+  // Relacionamentos
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transaction  Transaction   @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  agent        Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  reviews      AlertReview[]
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@index([status])
+  @@index([severity])
+  @@index([createdAt])
+  @@map("alerts")
+}
+
+enum AlertSeverity {
+  LOW      // Info apenas
+  MEDIUM   // Revisar em 24h
+  HIGH     // Revisar ASAP
+  CRITICAL // Imediato + notificar CFO
+}
+
+enum AlertStatus {
+  PENDING    // Aguardando revisão
+  REVIEWING  // Em análise
+  APPROVED   // Aprovado (falso positivo)
+  ESCALATED  // Escalado para nível superior
+  RESOLVED   // Resolvido
+}
+
+/// Revisões feitas por humanos nos alertas
+model AlertReview {
+  id        String   @id @default(cuid())
+  alertId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Decisão do revisor
+  decision AlertReviewDecision
+  comments String?              // (removed @db.Text)
+  
+  // SAR (Suspicious Activity Report)
+  isSAR    Boolean              @default(false) // Se gerou relatório SAR
+  sarId    String?              @unique
+
+  // Relacionamentos
+  alert Alert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([alertId])
+  @@index([userId])
+  @@map("alert_reviews")
+}
+
+enum AlertReviewDecision {
+  APPROVE           // Falso positivo, liberar
+  DENY              // Confirmar bloqueio
+  REQUEST_MORE_INFO // Precisa de mais informações
+  FILE_SAR          // Reportar às autoridades
+}
+
+// ============================================
+// COMPLIANCE & REPORTING
+// ============================================
+
+/// Configurações de compliance da organização
+model ComplianceSettings {
+  id             String   @id @default(cuid())
+  organizationId String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Limites globais
+  defaultDailyLimit      Decimal?
+  defaultTransactionLimit Decimal?
+  
+  // Thresholds de risco
+  autoApproveThreshold Float  @default(0.3) // < 0.3 = auto approve
+  autoBlockThreshold   Float  @default(0.7) // > 0.7 = auto block
+  
+  // Listas customizadas
+  whitelist Json? // [ "0xABC...123", "0xDEF...456" ]
+  blacklist Json? // [ "0xBAD...999" ]
+  
+  // Notificações
+  notifyOnHighRisk     Boolean @default(true)
+  notifyOnBlockedTx    Boolean @default(true)
+  slackWebhookUrl      String?
+  emailAlertRecipients Json? // [ "cfo@company.com", "compliance@company.com" ]
+  
+  // Compliance rules (JSON para flexibilidade)
+  customRules Json? // { noTransactionsAfter11pm: true, maxVendorsPerDay: 10, ... }
+
+  // Relacionamentos
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("compliance_settings")
+}
+
+/// Relatórios de compliance gerados automaticamente
+model ComplianceReport {
+  id             String       @id @default(cuid())
+  organizationId String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Período do relatório
+  reportType ReportType
+  periodStart DateTime
+  periodEnd   DateTime
+
+  // Estatísticas
+  totalTransactions Int
+  flaggedCount      Int
+  blockedCount      Int
+  sarCount          Int // Suspicious Activity Reports filed
+
+  // Dados completos (JSON para flexibilidade)
+  data Json // { transactionsByDay: [...], topAgents: [...], riskDistribution: {...} }
+
+  // Arquivos gerados
+  pdfUrl  String? // URL do PDF no S3/storage
+  csvUrl  String? // URL do CSV no S3/storage
+  
+  // Audit NFT (blockchain proof)
+  auditNFTAddress String? // Address do NFT no Arc Network
+  auditNFTTokenId String?
+
+  // Relacionamentos
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([reportType])
+  @@index([periodStart])
+  @@map("compliance_reports")
+}
+
+enum ReportType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  ANNUAL
+  CUSTOM
+}
+
+// ============================================
+// AUDIT & LOGS
+// ============================================
+
+/// Audit logs (toda ação importante é registrada)
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String?
+  createdAt      DateTime @default(now())
+
+  // Ação realizada
+  action      AuditAction
+  entityType  String // "transaction", "agent", "alert", etc.
+  entityId    String
+  
+  // Dados antes/depois (para compliance)
+  before Json?
+  after  Json?
+  
+  // Metadados
+  ipAddress  String?
+  userAgent  String?
+  metadata   Json? // Informações adicionais
+
+  // Relacionamentos
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
+  @@map("audit_logs")
+}
+
+enum AuditAction {
+  // Transações
+  TRANSACTION_SUBMITTED
+  TRANSACTION_APPROVED
+  TRANSACTION_BLOCKED
+  TRANSACTION_EXECUTED
+  
+  // Alertas
+  ALERT_CREATED
+  ALERT_REVIEWED
+  ALERT_APPROVED
+  ALERT_ESCALATED
+  
+  // Agentes
+  AGENT_CREATED
+  AGENT_UPDATED
+  AGENT_SUSPENDED
+  AGENT_ACTIVATED
+  
+  // Configurações
+  SETTINGS_UPDATED
+  RULE_CREATED
+  RULE_DELETED
+  
+  // Relatórios
+  REPORT_GENERATED
+  SAR_FILED
+  
+  // Usuários
+  USER_LOGIN
+  USER_LOGOUT
+  USER_CREATED
+  USER_DELETED
+}
+
+/// Notificações enviadas aos usuários
+model Notification {
+  id             String           @id @default(cuid())
+  organizationId String
+  createdAt      DateTime         @default(now())
+  readAt         DateTime?
+
+  // Conteúdo
+  type     NotificationType
+  severity NotificationSeverity
+  title    String
+  message  String               // (removed @db.Text)
+  
+  // Link de ação
+  actionUrl String? // ex: "/alerts/alert_123"
+  
+  // Metadados
+  metadata Json? // Dados adicionais
+
+  // Relacionamentos
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([createdAt])
+  @@index([readAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  ALERT_HIGH_RISK
+  ALERT_BLOCKED
+  AGENT_SUSPENDED
+  REPORT_READY
+  SYSTEM
+}
+
+enum NotificationSeverity {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
+
+// ============================================
+// API & INTEGRATIONS
+// ============================================
+
+/// API Keys para integração externa
+model ApiKey {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String?
+  createdAt      DateTime @default(now())
+  expiresAt      DateTime?
+  lastUsedAt     DateTime?
+
+  // Key info
+  name        String
+  key         String  @unique // Hash da chave real
+  permissions Json // { canCreateAgent: true, canApproveAlert: false, ... }
+  
+  // Status
+  isActive Boolean @default(true)
+  
+  // Rate limiting
+  rateLimit     Int? // Requests por minuto
+  requestCount  Int  @default(0)
+
+  // Relacionamentos
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([key])
+  @@map("api_keys")
+}
+
+// ============================================
+// ANALYTICS (Para dashboard)
+// ============================================
+
+/// Métricas agregadas por dia (para performance do dashboard)
+model DailyMetrics {
+  id             String   @id @default(cuid())
+  organizationId String
+  date           DateTime // removed @db.Date for SQLite
+  createdAt      DateTime @default(now())
+
+  // Transações
+  totalTransactions Int     @default(0)
+  approvedCount     Int     @default(0)
+  blockedCount      Int     @default(0)
+  totalVolume       Decimal @default(0)
+
+  // Alertas
+  alertsCreated  Int @default(0)
+  alertsResolved Int @default(0)
+
+  // Performance
+  avgRiskScore      Float?
+  avgResponseTimeMs Int? // Tempo médio de resposta em ms
+  
+  // Top agentes
+  topAgents Json? // [ { agentId, transactionCount, volume }, ... ]
+
+  @@unique([organizationId, date])
+  @@index([organizationId])
+  @@index([date])
+  @@map("daily_metrics")
+}
