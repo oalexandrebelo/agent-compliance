@@ -41,24 +41,42 @@ export function AuditLogViewer({ logs, isLoading }: { logs: AuditLog[]; isLoadin
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {logList.map((log) => (
-                                <TableRow key={log.id} className="hover:bg-muted/50">
-                                    <TableCell className="font-mono text-xs text-muted-foreground">
-                                        {new Date(log.createdAt).toLocaleString()}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className="font-mono text-xs">
-                                            {log.action}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-sm">
-                                        {log.entityType} <span className="text-xs text-muted-foreground">#{log.entityId.substring(0, 8)}</span>
-                                    </TableCell>
-                                    <TableCell className="text-xs font-mono max-w-[200px] truncate text-muted-foreground">
-                                        {JSON.stringify(log.metadata || log.before || {})}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                            {logList.map((log) => {
+                                // Extract txHash from metadata if available
+                                const metadata = log.metadata as Record<string, unknown> | null;
+                                const txHash = metadata?.txHash as string | undefined;
+                                const ARC_EXPLORER_URL = 'https://testnet.arcscan.app';
+
+                                return (
+                                    <TableRow key={log.id} className="hover:bg-muted/50">
+                                        <TableCell className="font-mono text-xs text-muted-foreground">
+                                            {new Date(log.createdAt).toLocaleString()}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className="font-mono text-xs">
+                                                {log.action}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-sm">
+                                            {log.entityType} <span className="text-xs text-muted-foreground">#{log.entityId.substring(0, 8)}</span>
+                                        </TableCell>
+                                        <TableCell className="text-xs font-mono max-w-[200px] text-muted-foreground">
+                                            {txHash ? (
+                                                <a
+                                                    href={`${ARC_EXPLORER_URL}/tx/${txHash}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-primary hover:underline flex items-center gap-1"
+                                                >
+                                                    View on Arc ↗
+                                                </a>
+                                            ) : (
+                                                <span className="truncate block">{JSON.stringify(log.metadata || log.before || {})}</span>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
                             {logList.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">

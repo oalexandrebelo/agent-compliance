@@ -17,23 +17,59 @@ declare module "hardhat/types/runtime" {
       name: "AuditLog",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.AuditLog__factory>;
+    getContractFactory(
+      name: "ComplianceGuardian",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ComplianceGuardian__factory>;
+    getContractFactory(
+      name: "IAuditLog",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IAuditLog__factory>;
 
     getContractAt(
       name: "AuditLog",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.AuditLog>;
+    getContractAt(
+      name: "ComplianceGuardian",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ComplianceGuardian>;
+    getContractAt(
+      name: "IAuditLog",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IAuditLog>;
 
     deployContract(
       name: "AuditLog",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.AuditLog>;
+    deployContract(
+      name: "ComplianceGuardian",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ComplianceGuardian>;
+    deployContract(
+      name: "IAuditLog",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IAuditLog>;
 
     deployContract(
       name: "AuditLog",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.AuditLog>;
+    deployContract(
+      name: "ComplianceGuardian",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ComplianceGuardian>;
+    deployContract(
+      name: "IAuditLog",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IAuditLog>;
 
     // default types
     getContractFactory(

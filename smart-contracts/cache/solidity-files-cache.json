@@ -36,6 +36,43 @@
       "artifacts": [
         "AuditLog"
       ]
+    },
+    "C:\\Users\\AB\\Documents\\AB_AGENTIC\\agent-compliance\\smart-contracts\\contracts\\ComplianceGuardian.sol": {
+      "lastModificationDate": 1766718320022,
+      "contentHash": "597db9678d7e4e2c10e8f2e7e0f716a9",
+      "sourceName": "contracts/ComplianceGuardian.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "ComplianceGuardian",
+        "IAuditLog"
+      ]
     }
   }
 }
