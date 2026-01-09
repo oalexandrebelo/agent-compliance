@@ -82,6 +82,7 @@ export default function AlertsPage() {
         }
     });
     const [filterSeverity, setFilterSeverity] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
     const [usingFallback, setUsingFallback] = useState(false);
 
     // Silent failover: use fallback data if error or empty response after timeout
@@ -125,9 +126,16 @@ export default function AlertsPage() {
         }
     };
 
-    const filteredAlerts = alerts.filter(alert =>
-        filterSeverity === 'all' || alert.severity.toLowerCase() === filterSeverity
-    );
+    // Filter by severity AND search query (with sanitization via trim)
+    const filteredAlerts = alerts.filter(alert => {
+        const matchesSeverity = filterSeverity === 'all' || alert.severity.toLowerCase() === filterSeverity;
+        const searchTerm = searchQuery.trim().toLowerCase();
+        const matchesSearch = searchTerm === '' ||
+            alert.agent?.name?.toLowerCase().includes(searchTerm) ||
+            alert.aiExplanation?.toLowerCase().includes(searchTerm) ||
+            alert.reasons.some(r => r.toLowerCase().includes(searchTerm));
+        return matchesSeverity && matchesSearch;
+    });
 
     return (
         <AgentCommandShell>
@@ -146,7 +154,13 @@ export default function AlertsPage() {
                 <div className="flex items-center gap-4">
                     <div className="relative flex-1 max-w-sm">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input type="search" placeholder="Search alerts..." className="pl-8" />
+                        <Input
+                            type="search"
+                            placeholder="Search alerts..."
+                            className="pl-8"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
                     </div>
                     <Select value={filterSeverity} onValueChange={setFilterSeverity}>
                         <SelectTrigger className="w-[180px]">
@@ -159,7 +173,6 @@ export default function AlertsPage() {
                             <SelectItem value="medium">Medium</SelectItem>
                         </SelectContent>
                     </Select>
-                    <Button variant="outline"><Filter className="mr-2 h-4 w-4" /> More Filters</Button>
                 </div>
 
                 {/* Alerts List */}

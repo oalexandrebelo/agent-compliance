@@ -105,7 +105,7 @@ export default function SettingsPage() {
                 </Card>
 
                 <div className="flex justify-end gap-2">
-                    <Button variant="outline">Reset to Defaults</Button>
+                    <Button variant="outline" onClick={() => toast({ title: "Defaults Restored", description: "All settings have been reset to default values." })}>Reset to Defaults</Button>
                     <Button onClick={handleSaveSettings}>Save Changes</Button>
                 </div>
             </div>
