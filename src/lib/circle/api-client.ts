@@ -13,6 +13,7 @@ interface CircleConfig {
 }
 
 interface CreateWalletRequest {
+    walletSetId: string;
     blockchains: string[];
     count: number;
     metadata?: Array<{ name: string; refId?: string }>;
