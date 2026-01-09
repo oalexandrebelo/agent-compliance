@@ -26,7 +26,7 @@ export async function POST(
         if (updatedAlert.transactionId) {
             await prisma.transaction.update({
                 where: { id: updatedAlert.transactionId },
-                data: { status: 'BLOCKED', decision: 'MANUAL_BLOCK' }
+                data: { status: 'BLOCKED', decision: 'MANUAL_DENY' }
             });
         }
 
