@@ -47,7 +47,7 @@ export async function evaluateTransaction(transactionId: string) {
                     overallScore: riskAnalysis.score,
                     confidence: 0.9,
                     aiExplanation: riskAnalysis.explanation,
-                    reasons: riskAnalysis.reasons,
+                    reasons: riskAnalysis.flags,
                     agentId: tx.agentId
                 }
             }
@@ -63,7 +63,7 @@ export async function evaluateTransaction(transactionId: string) {
                 organizationId: tx.organizationId,
                 severity: riskAnalysis.score > 0.8 ? 'CRITICAL' : 'HIGH',
                 status: 'PENDING',
-                reasons: riskAnalysis.reasons,
+                reasons: riskAnalysis.flags,
                 aiExplanation: riskAnalysis.explanation
             }
         });
