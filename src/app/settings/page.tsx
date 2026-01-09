@@ -106,7 +106,7 @@ export default function SettingsPage() {
 
                 <div className="flex justify-end gap-2">
                     <Button variant="outline">Reset to Defaults</Button>
-                    <Button>Save Changes</Button>
+                    <Button onClick={handleSaveSettings}>Save Changes</Button>
                 </div>
             </div>
         </AgentCommandShell>

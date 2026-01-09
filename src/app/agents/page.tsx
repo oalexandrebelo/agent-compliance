@@ -22,7 +22,7 @@ export default function AgentsPage() {
                     <h1 className="text-3xl font-bold tracking-tight">Agent Registry</h1>
                     <p className="text-muted-foreground">Manage authorized autonomous agents and their permissions.</p>
                 </div>
-                <Button>
+                <Button onClick={() => alert('Feature coming soon! Use the existing agents for demo.')}>
                     <Plus className="mr-2 h-4 w-4" /> Deploy New Agent
                 </Button>
             </div>
