@@ -3,8 +3,8 @@ import AuditLogArtifact from './abi/AuditLog.json';
 
 // PRODUCTION CONFIGURATION (Arc Testnet)
 const RPC_URL = process.env.ARC_RPC_URL || 'https://rpc.testnet.arc.network';
-// Deployer wallet (User provided)
-const PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
+// Deployer wallet - MUST be set in environment (no fallback for security)
+const PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY;
 // Contract Address (Deployed on Arc Testnet)
 const CONTRACT_ADDRESS = process.env.AUDIT_LOG_CONTRACT_ADDRESS || '0x4640e9eb48d1ecDC33E6796aDF700E3AFE92ea32';
 
