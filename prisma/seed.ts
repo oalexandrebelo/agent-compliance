@@ -88,6 +88,56 @@ async function main() {
         },
     })
 
+    // 🔴 MALICIOUS AGENT for Demo - Will trigger high-risk alerts
+    const rogueAgent = await prisma.agent.upsert({
+        where: { walletAddress: '0xBAD0000000000000000000000000000000000001' },
+        update: {},
+        create: {
+            name: 'Rogue_Bot_X',
+            description: 'DEMO: Suspicious trading bot with wash trading patterns',
+            status: 'ACTIVE',
+            organizationId: org.id,
+            walletAddress: '0xBAD0000000000000000000000000000000000001',
+            walletId: 'wallet_rogue_demo',
+            trustScore: 0.15, // Very low trust
+            totalSpent: 890000, // Suspiciously high volume
+            transactionCount: 2500, // Too many transactions
+            alertCount: 5,
+            blockedCount: 3,
+        },
+    })
+
+    // Suspicious transactions for Rogue_Bot_X
+    await prisma.transaction.create({
+        data: {
+            agentId: rogueAgent.id,
+            organizationId: org.id,
+            fromAddress: rogueAgent.walletAddress,
+            toAddress: '0xTornadoCashMixer123',
+            amount: 49999, // Just under $50k reporting threshold (structuring!)
+            currency: 'USDC',
+            status: 'QUARANTINE',
+            decision: 'PENDING',
+            riskScore: 0.95,
+            submittedAt: new Date(Date.now() - 300000), // 5 mins ago
+        }
+    })
+
+    await prisma.transaction.create({
+        data: {
+            agentId: rogueAgent.id,
+            organizationId: org.id,
+            fromAddress: rogueAgent.walletAddress,
+            toAddress: '0xSameWallet_WashTrade',
+            amount: 25000,
+            currency: 'USDC',
+            status: 'BLOCKED',
+            decision: 'AUTO_BLOCK',
+            riskScore: 0.92,
+            submittedAt: new Date(Date.now() - 600000), // 10 mins ago
+        }
+    })
+
     // Create sample transactions for each agent
     // 1. High Risk Transaction from TESTE_1 (Pending)
     await prisma.transaction.create({
